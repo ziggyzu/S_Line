@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S-Line Pic Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            padding: 30px;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #007bff;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-area p {
+            margin: 0;
+            color: #777;
+            font-size: 1.1em;
+        }
+
+        .upload-area img {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 15px;
+            border-radius: 5px;
+            display: none; /* Hidden by default, shown when image is loaded */
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #result-area {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            display: none; /* Hidden by default */
+        }
+
+        #result-area h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        #result-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>S-Line Pic Generator</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="imageUpload" accept="image/*">
+                <p>Drag & Drop your image here, or click to select</p>
+                <img id="imagePreview" src="#" alt="Image Preview">
+            </div>
+            <button type="submit" id="generateButton" disabled>Generate S-Line Pic</button>
+            <div class="error-message" id="errorMessage"></div>
+        </form>
+
+        <div id="result-area">
+            <h2>Your S-Line Picture</h2>
+            <img id="result-image" src="#" alt="Generated S-Line Image">
+            <button onclick="downloadImage()">Download Image</button>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const imageUpload = document.getElementById('imageUpload');
+        const imagePreview = document.getElementById('imagePreview');
+        const generateButton = document.getElementById('generateButton');
+        const uploadForm = document.getElementById('uploadForm');
+        const resultArea = document.getElementById('result-area');
+        const resultImage = document.getElementById('result-image');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let uploadedFile = null;
+
+        // Simulate file click when upload area is clicked
+        uploadArea.addEventListener('click', () => {
+            imageUpload.click();
+        });
+
+        // Handle file selection
+        imageUpload.addEventListener('change', (event) => {
+            handleFiles(event.target.files);
+        });
+
+        // Handle drag over
+        uploadArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            uploadArea.style.borderColor = '#007bff';
+        });
+
+        // Handle drag leave
+        uploadArea.addEventListener('dragleave', (event) => {
+            event.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+        });
+
+        // Handle drop
+        uploadArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            handleFiles(event.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                uploadedFile = files[0];
+                if (uploadedFile.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                        generateButton.disabled = false; // Enable button once image is loaded
+                        errorMessage.style.display = 'none'; // Hide any previous errors
+                    };
+                    reader.readAsDataURL(uploadedFile);
+                } else {
+                    imagePreview.style.display = 'none';
+                    imagePreview.src = '#';
+                    uploadedFile = null;
+                    generateButton.disabled = true;
+                    errorMessage.textContent = 'Please upload an image file (e.g., JPEG, PNG).';
+                    errorMessage.style.display = 'block';
+                }
+            } else {
+                imagePreview.style.display = 'none';
+                imagePreview.src = '#';
+                uploadedFile = null;
+                generateButton.disabled = true;
+                errorMessage.style.display = 'none';
+            }
+        }
+
+        // Handle form submission (where image processing would be triggered)
+        uploadForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            if (!uploadedFile) {
+                errorMessage.textContent = 'Please upload an image first.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            // --- THIS IS WHERE THE IMAGE PROCESSING LOGIC WOULD GO ---
+            // For a real application, you would send 'uploadedFile' to a server
+            // for processing. The server would then return the 'S-line' image.
+
+            generateButton.textContent = 'Generating...';
+            generateButton.disabled = true;
+            resultArea.style.display = 'none'; // Hide previous result
+
+            try {
+                // Simulate an API call for image processing
+                // Replace this with your actual API endpoint and logic
+                const formData = new FormData();
+                formData.append('image', uploadedFile);
+
+                // Example of a fetch request to a backend:
+                // const response = await fetch('/generate-s-line', {
+                //     method: 'POST',
+                //     body: formData,
+                // });
+                // if (!response.ok) {
+                //     throw new Error(`HTTP error! status: ${response.status}`);
+                // }
+                // const blob = await response.blob();
+                // resultImage.src = URL.createObjectURL(blob);
+
+                // --- TEMPORARY MOCK FOR DEMONSTRATION ---
+                // In a real scenario, the server would return the processed image.
+                // Here, we'll just show the original image as a placeholder for the "S-line" result.
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate delay
+                resultImage.src = imagePreview.src; // Just showing original for demo
+                // If your server returns a base64 string:
+                // resultImage.src = "data:image/png;base64,YOUR_BASE64_STRING_HERE";
+
+
+                resultArea.style.display = 'block';
+                errorMessage.style.display = 'none';
+            } catch (error) {
+                console.error('Error generating S-line pic:', error);
+                errorMessage.textContent = 'Error generating image. Please try again.';
+                errorMessage.style.display = 'block';
+                resultArea.style.display = 'none';
+            } finally {
+                generateButton.textContent = 'Generate S-Line Pic';
+                generateButton.disabled = false;
+            }
+        });
+
+        function downloadImage() {
+            if (resultImage.src && resultImage.src !== '#') {
+                const link = document.createElement('a');
+                link.href = resultImage.src;
+                // You might want to give it a more descriptive name,
+                // perhaps based on the original file name + "_s_line.png"
+                link.download = 's_line_pic.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    </script>
+</body>
+</html>
